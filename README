@@ -1,8 +1,49 @@
 Bayesian MCMC inversion of glaciological AVA data, PP/PS/SS compatible
 Inversion as described in Ronan Agnew, PhD thesis, University of Leeds (2024)
 
---- bed_prop_inv_mcmc_v2.m is the main mcmc AVA fitting program ---
---- the other functions and scripts relate to plotting and saving the inversion results ---
+Agnew, R. S., Booth, A. D., Brisbourne, A. M., Clark, R. A., Livermore, P. W., &
+Smith, A. M. (2025). Subglacial conditions from converted‐wave seismic reflection
+amplitudes: Synthetic experiments and case study reveal a frozen bed at an
+Antarctic ice rise. Accepted in Journal of Geophysical Research: Earth Surface, 25 Nov 2025
+
+--- Tested in MATLAB R2023b ---
 --- you will need the MATLAB statistics and machine learning toolbox ---
---- you will also need the CREWES zoeppritz function (Gary F. Margrave):https://www.crewes.org/ResearchLinks/FreeSoftware/index.php ---
---- Ronan Agnew 2024, rognew91@bas.ac.uk ---
+--- you will need the CREWES zoeppritz function (Gary F. Margrave):https://www.crewes.org/ResearchLinks/FreeSoftware/index.php ---
+
+--- bed_prop_inv_mcmc_v102.m is the main mcmc AVA fitting program ---
+--- the other functions and scripts relate to plotting and saving the inversion results ---
+
+--- input data required: 
+	PPdata.mat file
+	PSdata.mat file
+	optional: SSdata.mat file
+
+	PPdata.mat must contain variables:
+		anginc_PP - angle of incidence 1xn matrix of incidence angles for PP
+		Rpp - Reflection coefficient 1xn for PP
+		Rpp_err - error on reflection coefficient 1xn for PP
+	
+	PSdata.mat:
+		anginc_PS - angle of incidence 1xn matrix of incidence angles for PS
+		Rps - Reflection coefficient 1xn for PS
+		Rps_err - error on reflection coefficient 1xn for PS
+	
+	SSdata.mat:
+		anginc_SS - angle of incidence 1xn matrix of incidence angles for SS
+		Rss - Reflection coefficient 1xn for PS
+		Rss_err - error on reflection coefficient 1xn for SS
+		
+	n.b. even if you are just using PP, you have to load up Rps and Rss in version 1.0.2. But you can set PS and SS variables to 1xn matrix of NaN.
+
+--- Plotting scripts:
+	--- plot_all_results_v3.m called by main to plot results 
+	--- plot_zpois_ref.m, plot_zpois_misfit.m , plot_zbeta_ref.m, plot_zbeta_posterior.m, plot_zbeta_misfit.m, plot_hists.m, plot_reference.m, called by plot_all_results_v3.m 
+	--- inv_figure.m formats figure
+
+--- Saving scripts: 
+	--- save_inversion_results.m saves inversion results, can call from command line if you set saving=FALSE in main.
+	--- load_saved_results.m unwrap structs saved in .mat files by main program
+	--- plot_saved_results.m unwrap structs saved in .mat files and calls plot_all_results_v3.m
+
+--- Version 1.0.2 ---
+--- Ronan Agnew 2025 ---

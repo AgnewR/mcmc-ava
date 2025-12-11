@@ -1,5 +1,5 @@
-addpath('~/Documents/MATLAB/crameri_v1.07/crameri');
-addpath('~/Documents/MATLAB/crewes/syntraces');
+%% load_saved_results.m
+%% first load .mat file of your saved results. Then this unwraps the structs so plotting functions work
 
 BED = inputs.BED;
 includePS = inputs.includePS;
@@ -64,93 +64,77 @@ else
 end
 
 
-    x = models_saved(burn_in+1:number_iterations, 4);
-    y = models_saved(burn_in+1:number_iterations, 6);
-    z = models_saved(burn_in+1:number_iterations, 2);
-    %c = log_likelihood_saved(burn_in+1:number_iterations);
-    c = exp(log_posterior_saved(burn_in+1:number_iterations));
+x = models_saved(burn_in+1:number_iterations, 4);
+y = models_saved(burn_in+1:number_iterations, 6);
+z = models_saved(burn_in+1:number_iterations, 2);
+c = exp(log_posterior_saved(burn_in+1:number_iterations));
 
+[log_posterior_best, besti] = max(log_posterior_saved);
+m_best = models_saved(besti, :);
 
-    %foo(1:burn_in) = 3000;
-    %{
-    if figson
-        figure; hold on;
-        %plot3(models_saved(1:burn_in, 4), models_saved(1:burn_in, 6), foo, 'r')
-        plot3(x,y,z);
-        cla
-        patch([x; nan], [y; nan], [z; nan], [c; nan], 'EdgeColor', 'interp', 'FaceColor', 'none');
-        xlabel('vp'); ylabel('vs'); zlabel('density')
-        %xlim([0 5000]); ylim([0 3000]); zlim([0 3000]);
-    end
-    %}
+%models_pbi = post burn in
+models_pbi = models_saved(burn_in+1:number_iterations, :);
+log_posterior_pbi = log_posterior_saved(burn_in+1:number_iterations);
 
-    %[log_likelihood_best, besti] = max(log_likelihood_saved);
-    [log_posterior_best, besti] = max(log_posterior_saved);
-    m_best = models_saved(besti, :);
-
-    %models_pbi = post burn in
-    models_pbi = models_saved(burn_in+1:number_iterations, :);
-    log_posterior_pbi = log_posterior_saved(burn_in+1:number_iterations);
-
-    %find uncertainties using credible interval defined in preamble
-    for err_thresh = 0.1:-0.0001:0.0001
-        log_level = log(err_thresh) + log_posterior_best;
-        modelnum_above_level = find(log_posterior_pbi > log_level);
-        models_above_level = models_pbi(modelnum_above_level, :);
-        max_of_models = max(models_above_level(:,:));
-        min_of_models = min(models_above_level(:,:));
-        pm_of_models = (max_of_models - min_of_models)/2;
+%find uncertainties using credible interval defined in preamble
+for err_thresh = 0.1:-0.0001:0.0001
+    log_level = log(err_thresh) + log_posterior_best;
+    modelnum_above_level = find(log_posterior_pbi > log_level);
+    models_above_level = models_pbi(modelnum_above_level, :);
+    max_of_models = max(models_above_level(:,:));
+    min_of_models = min(models_above_level(:,:));
+    pm_of_models = (max_of_models - min_of_models)/2;
 
 
 
-        cred_interval = length(modelnum_above_level)/(number_iterations-burn_in);
+    cred_interval = length(modelnum_above_level)/(number_iterations-burn_in);
 
-        if cred_interval > accept_cred_interval
-            break;
-        end
-
+    if cred_interval > accept_cred_interval
+        break;
     end
 
-    models_pbi_sorted = sortrows(models_pbi, [4 6 2 3 5 1]);
-    bar = find(models_pbi_sorted(:,4) == min_of_models(4));
-    conf_isovalue = max(log_posterior_pbi(bar));
+end
+
+models_pbi_sorted = sortrows(models_pbi, [4 6 2 3 5 1]);
+bar = find(models_pbi_sorted(:,4) == min_of_models(4));
+conf_isovalue = max(log_posterior_pbi(bar));
 
 
 
 %model AVO curves of best models.
-    coefPP_best = zoeppritz(m_best(1), m_best(3), m_best(5), m_best(2), m_best(4), m_best(6), 1, 1, 0, anginc_PP);
-    Rpp_best = real(coefPP_best);
+coefPP_best = zoeppritz(m_best(1), m_best(3), m_best(5), m_best(2), m_best(4), m_best(6), 1, 1, 0, anginc_PP);
+Rpp_best = real(coefPP_best);
 
-    coefPS_best = zoeppritz(m_best(1), m_best(3), m_best(5), m_best(2), m_best(4), m_best(6), 1, 2, 0, anginc_PS);
-    Rps_best = real(coefPS_best);
+coefPS_best = zoeppritz(m_best(1), m_best(3), m_best(5), m_best(2), m_best(4), m_best(6), 1, 2, 0, anginc_PS);
+Rps_best = real(coefPS_best);
 
-    coefSS_best = zoeppritz(m_best(1), m_best(3), m_best(5), m_best(2), m_best(4), m_best(6), 2, 2, 0, anginc_SS);
-    Rss_best = real(coefSS_best);
+coefSS_best = zoeppritz(m_best(1), m_best(3), m_best(5), m_best(2), m_best(4), m_best(6), 2, 2, 0, anginc_SS);
+Rss_best = real(coefSS_best);
 
-    %%find acoustic impedance and poisson's ratio
-    alphabeta = m_best(4)/m_best(6);
-    Z_best = m_best(4)*m_best(2);
-    poisson_best = (alphabeta^2 - 2)/(2*(alphabeta^2 - 1));
+%%find acoustic impedance and poisson's ratio
+alphabeta = m_best(4)/m_best(6);
+Z_best = m_best(4)*m_best(2);
+poisson_best = (alphabeta^2 - 2)/(2*(alphabeta^2 - 1));
 
-    Z_saved = models_pbi(:,4).*models_pbi(:,2);
-    alphabeta_saved = models_pbi(:,4)./models_pbi(:,6);
-    poisson_saved = (alphabeta_saved.^2 - 2)./(2.*(alphabeta_saved.^2 - 1));
+Z_saved = models_pbi(:,4).*models_pbi(:,2);
+alphabeta_saved = models_pbi(:,4)./models_pbi(:,6);
+poisson_saved = (alphabeta_saved.^2 - 2)./(2.*(alphabeta_saved.^2 - 1));
 
-    %% find median model
+%% find median model
 
-    median_model = median(models_pbi);
-    iqr_model = iqr(models_pbi);
+median_model = median(models_pbi);
+iqr_model = iqr(models_pbi);
 
-    coefPP_med = zoeppritz(median_model(1), median_model(3), median_model(5), median_model(2), median_model(4), median_model(6), 1, 1, 0, anginc_PP);
-    Rpp_med = real(coefPP_med);
+coefPP_med = zoeppritz(median_model(1), median_model(3), median_model(5), median_model(2), median_model(4), median_model(6), 1, 1, 0, anginc_PP);
+Rpp_med = real(coefPP_med);
 
-    coefPS_med = zoeppritz(median_model(1), median_model(3), median_model(5), median_model(2), median_model(4), median_model(6), 1, 2, 0, anginc_PS);
-    Rps_med = real(coefPS_med);
+coefPS_med = zoeppritz(median_model(1), median_model(3), median_model(5), median_model(2), median_model(4), median_model(6), 1, 2, 0, anginc_PS);
+Rps_med = real(coefPS_med);
 
-    coefSS_med = zoeppritz(median_model(1), median_model(3), median_model(5), median_model(2), median_model(4), median_model(6), 2, 2, 0, anginc_SS);
-    Rss_med = real(coefSS_med);
+coefSS_med = zoeppritz(median_model(1), median_model(3), median_model(5), median_model(2), median_model(4), median_model(6), 2, 2, 0, anginc_SS);
+Rss_med = real(coefSS_med);
 
 
 
-    %% plost all the results
+%% plots all the results
 plot_all_results_v3
